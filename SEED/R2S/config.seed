@@ -182,9 +182,13 @@ CONFIG_PACKAGE_luci-app-minidlna=y
 
 #util
 CONFIG_PACKAGE_git=y
+CONFIG_PACKAGE_git-http=y
 CONFIG_PACKAGE_perl=y
 CONFIG_PACKAGE_lsblk=y
 CONFIG_PACKAGE_blkid=y
 CONFIG_PACKAGE_coreutils-nohup=y
 CONFIG_PACKAGE_cfdisk=y
 CONFIG_PACKAGE_openssh-sftp-server=y
+CONFIG_PACKAGE_curl=y
+CONFIG_PACKAGE_wget=y
+CONFIG_PACKAGE_moreutils=y
