@@ -1,6 +1,6 @@
 #OC
 #cp -f ../PATCH/999-unlock-1608mhz-rk3328.patch ./target/linux/rockchip/patches-5.4/999-unlock-1608mhz-rk3328.patch
-cp -f ../999-RK3328-enable-1512mhz-opp.patch ./target/linux/rockchip/patches-5.4/999-RK3328-enable-1512mhz-opp.patch
+#cp -f ../999-RK3328-enable-1512mhz-opp.patch ./target/linux/rockchip/patches-5.4/999-RK3328-enable-1512mhz-opp.patch
 
 #qbittorrent
 svn co https://github.com/coolsnowwolf/lede/trunk/package/lean/qt5 package/lean/qt5
