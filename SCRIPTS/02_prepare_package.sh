@@ -17,6 +17,7 @@ rm -rf ./scripts/download.pl
 rm -rf ./include/download.mk
 wget -P scripts/ https://github.com/immortalwrt/immortalwrt/raw/master/scripts/download.pl
 wget -P include/ https://github.com/immortalwrt/immortalwrt/raw/master/include/download.mk
+wget -P include/ https://github.com/immortalwrt/immortalwrt/raw/master/include/package-immortalwrt.mk
 
 ### 必要的 Patches ###
 # Patch arm64 型号名称
@@ -77,7 +78,7 @@ rm -rf ./feeds/packages/lang/node-yarn
 svn co https://github.com/nxhack/openwrt-node-packages/trunk/node-yarn feeds/packages/lang/node-yarn
 ln -sf ../../../feeds/packages/lang/node-yarn ./package/feeds/packages/node-yarn
 # R8168驱动
-svn co https://github.com/immortalwrt/immortalwrt/branches/master/package/ctcgfw/r8168 package/new/r8168
+svn co https://github.com/immortalwrt/immortalwrt/branches/master/package/kernel/r8168 package/new/r8168
 patch -p1 < ../PATCH/new/main/r8168-fix_LAN_led-for_r4s-from_TL.patch
 # UPX 可执行软件压缩
 sed -i '/patchelf pkgconf/i\tools-y += ucl upx' ./tools/Makefile
@@ -100,6 +101,8 @@ sed -i '/\t)/a\\t$(STAGING_DIR_HOST)/bin/upx --lzma --best $(GO_PKG_BUILD_BIN_DI
 sed -i '/init/d' feeds/packages/net/adguardhome/Makefile
 # Argon 主题
 git clone -b master --depth 1 https://github.com/jerrykuku/luci-theme-argon.git package/new/luci-theme-argon
+wget -P ./package/new/luci-theme-argon/luasrc/view/themes/argon -N https://github.com/jerrykuku/luci-theme-argon/raw/9fdcfc866ca80d8d094d554c6aedc18682661973/luasrc/view/themes/argon/footer.htm
+wget -P ./package/new/luci-theme-argon/luasrc/view/themes/argon -N https://github.com/jerrykuku/luci-theme-argon/raw/9fdcfc866ca80d8d094d554c6aedc18682661973/luasrc/view/themes/argon/header.htm
 git clone -b master --depth 1 https://github.com/jerrykuku/luci-app-argon-config.git package/new/luci-app-argon-config
 # MAC 地址与 IP 绑定
 svn co https://github.com/QiuSimons/OpenWrt_luci-app/trunk/lean/luci-app-arpbind package/lean/luci-app-arpbind
@@ -155,16 +158,22 @@ svn co https://github.com/coolsnowwolf/lede/trunk/package/lean/luci-app-ipsec-vp
 svn co https://github.com/coolsnowwolf/lede/trunk/package/lean/ipv6-helper package/lean/ipv6-helper
 # 京东签到 By Jerrykuku
 git clone --depth 1 https://github.com/jerrykuku/node-request.git package/new/node-request
-git clone --depth 1 https://github.com/jerrykuku/luci-app-jd-dailybonus.git package/new/luci-app-jd-dailybonus
+svn co -r131 https://github.com/jerrykuku/luci-app-jd-dailybonus/trunk package/new/luci-app-jd-dailybonus
 pushd package/new/luci-app-jd-dailybonus
 sed -i 's/wget-ssl/wget/g' root/usr/share/jd-dailybonus/newapp.sh luasrc/controller/jd-dailybonus.lua
 popd
 # 回滚通用即插即用
 #rm -rf ./feeds/packages/net/miniupnpd
 #svn co https://github.com/coolsnowwolf/packages/trunk/net/miniupnpd feeds/packages/net/miniupnpd
+# MentoHUST
+git clone --depth 1 https://github.com/BoringCat/luci-app-mentohust package/new/luci-app-mentohust
+git clone --depth 1 https://github.com/KyleRicardo/MentoHUST-OpenWrt-ipk package/new/MentoHUST
 # Moschinadns
 svn co https://github.com/QiuSimons/openwrt-packages/branches/main/mos-chinadns package/new/mos-chinadns
 svn co https://github.com/QiuSimons/openwrt-packages/branches/main/luci-app-moschinadns package/new/luci-app-moschinadns
+# Mosdns
+svn co https://github.com/QiuSimons/openwrt-mos/trunk/mosdns package/new/mosdns
+svn co https://github.com/QiuSimons/openwrt-mos/trunk/luci-app-mosdns package/new/luci-app-mosdns
 # 流量监管
 svn co https://github.com/coolsnowwolf/lede/trunk/package/lean/luci-app-netdata package/lean/luci-app-netdata
 # 上网 APP 过滤
@@ -212,11 +221,13 @@ rm -rf ./feeds/packages/net/smartdns
 mkdir package/new/smartdns
 wget -P package/new/smartdns/ https://github.com/HiGarfield/lede-17.01.4-Mod/raw/master/package/extra/smartdns/Makefile
 sed -i 's,files/etc/config,$(PKG_BUILD_DIR)/package/openwrt/files/etc/config,g' ./package/new/smartdns/Makefile
+rm -rf ./feeds/luci/applications/luci-app-smartdns
+svn co https://github.com/immortalwrt/immortalwrt/branches/openwrt-18.06-k5.4/package/ntlf9t/luci-app-smartdns package/new/luci-app-smartdns
 # ShadowsocksR Plus+
 svn co https://github.com/fw876/helloworld/trunk/luci-app-ssr-plus package/lean/luci-app-ssr-plus
 rm -rf ./package/lean/luci-app-ssr-plus/po/zh_Hans
 pushd package/lean
-#wget -qO - https://patch-diff.githubusercontent.com/raw/fw876/helloworld/pull/430.patch | patch -p1
+#wget -qO - https://patch-diff.githubusercontent.com/raw/fw876/helloworld/pull/442.patch | patch -p1
 popd
 sed -i 's,default n,default y,g' package/lean/luci-app-ssr-plus/Makefile
 sed -i 's,Xray:xray ,Xray:xray-core ,g' package/lean/luci-app-ssr-plus/Makefile
@@ -245,10 +256,11 @@ svn co https://github.com/coolsnowwolf/lede/trunk/package/lean/trojan package/le
 svn co https://github.com/fw876/helloworld/trunk/naiveproxy package/lean/naiveproxy
 svn co https://github.com/fw876/helloworld/trunk/shadowsocks-rust package/lean/shadowsocks-rust
 # 订阅转换
-svn co https://github.com/immortalwrt/immortalwrt/branches/master/package/ctcgfw/subconverter package/new/subconverter
-svn co https://github.com/immortalwrt/immortalwrt/branches/master/package/ctcgfw/jpcre2 package/new/jpcre2
-svn co https://github.com/immortalwrt/immortalwrt/branches/master/package/ctcgfw/rapidjson package/new/rapidjson
-svn co https://github.com/immortalwrt/immortalwrt/branches/master/package/ctcgfw/duktape package/new/duktape
+svn co https://github.com/immortalwrt/packages/trunk/net/subconverter package/new/subconverter
+svn co https://github.com/immortalwrt/packages/trunk/libs/jpcre2 package/new/jpcre2
+svn co https://github.com/immortalwrt/packages/trunk/libs/rapidjson package/new/rapidjson
+svn co https://github.com/immortalwrt/packages/trunk/libs/libcron package/new/libcron
+svn co https://github.com/immortalwrt/packages/trunk/libs/quickjspp package/new/quickjspp
 # 网易云音乐解锁
 git clone --depth 1 https://github.com/immortalwrt/luci-app-unblockneteasemusic.git package/new/UnblockNeteaseMusic
 # USB 打印机
