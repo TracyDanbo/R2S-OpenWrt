@@ -39,7 +39,7 @@ cp -f ../PATCH/new/package/900-add-filter-aaaa-option.patch ./package/network/se
 pushd target/linux/generic/hack-5.4
 wget https://github.com/coolsnowwolf/lede/raw/master/target/linux/generic/hack-5.4/952-net-conntrack-events-support-multiple-registrant.patch
 popd
-# Patch FireWall 以增添 FullCone 功能 
+# Patch FireWall 以增添 FullCone 功能
 mkdir package/network/config/firewall/patches
 wget -P package/network/config/firewall/patches/ https://github.com/immortalwrt/immortalwrt/raw/master/package/network/config/firewall/patches/fullconenat.patch
 # Patch LuCI 以增添 FullCone 开关
@@ -85,7 +85,7 @@ svn co https://github.com/nxhack/openwrt-node-packages/trunk/node-yarn feeds/pac
 ln -sf ../../../feeds/packages/lang/node-yarn ./package/feeds/packages/node-yarn
 # R8168驱动
 svn co https://github.com/immortalwrt/immortalwrt/branches/master/package/kernel/r8168 package/new/r8168
-patch -p1 < ../PATCH/new/main/r8168-fix_LAN_led-for_r4s-from_TL.patch
+#patch -p1 < ../PATCH/new/main/r8168-fix_LAN_led-for_r4s-from_TL.patch
 # UPX 可执行软件压缩
 sed -i '/patchelf pkgconf/i\tools-y += ucl upx' ./tools/Makefile
 sed -i '\/autoconf\/compile :=/i\$(curdir)/upx/compile := $(curdir)/ucl/compile' ./tools/Makefile
@@ -237,6 +237,9 @@ svn co https://github.com/fw876/helloworld/trunk/luci-app-ssr-plus package/lean/
 rm -rf ./package/lean/luci-app-ssr-plus/po/zh_Hans
 pushd package/lean
 #wget -qO - https://github.com/QiuSimons/helloworld-fw876/commit/b1a2d3c.patch | patch -p1
+#wget -qO - https://github.com/fw876/helloworld/pull/504.patch | patch -p1
+#wget -qO - https://github.com/fw876/helloworld/pull/505.patch | patch -p1
+#wget -qO - https://github.com/fw876/helloworld/pull/506.patch | patch -p1
 wget -qO - https://github.com/QiuSimons/helloworld-fw876/commit/c1674ad.patch | patch -p1
 popd
 pushd package/lean/luci-app-ssr-plus
@@ -302,12 +305,12 @@ git clone -b master --depth 1 https://github.com/brvphoenix/luci-app-wrtbwmon.gi
 # 迅雷快鸟宽带加速
 git clone --depth 1 https://github.com/garypang13/luci-app-xlnetacc.git package/lean/luci-app-xlnetacc
 # Zerotier
-svn co https://github.com/immortalwrt/immortalwrt/branches/master/package/lean/luci-app-zerotier package/lean/luci-app-zerotier
-cp -f ../PATCH/new/script/move_2_services.sh ./package/lean/luci-app-zerotier/move_2_services.sh
-pushd package/lean/luci-app-zerotier
-bash move_2_services.sh
-popd
-rm -rf ./feeds/packages/net/zerotier/files/etc/init.d/zerotier
+#svn co https://github.com/immortalwrt/immortalwrt/branches/master/package/lean/luci-app-zerotier package/lean/luci-app-zerotier
+#cp -f ../PATCH/new/script/move_2_services.sh ./package/lean/luci-app-zerotier/move_2_services.sh
+#pushd package/lean/luci-app-zerotier
+#bash move_2_services.sh
+#popd
+#rm -rf ./feeds/packages/net/zerotier/files/etc/init.d/zerotier
 
 
 ### 最后的收尾工作 ###
