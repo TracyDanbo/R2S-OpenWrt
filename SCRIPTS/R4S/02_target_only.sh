@@ -14,7 +14,7 @@ cp -f ../PATCH/target_r4s/991-rockchip-rk3399-overclock-to-2.2-1.8-GHz-for-NanoP
 cp -f ../PATCH/target_r4s/213-RK3399-set-critical-CPU-temperature-for-thermal-throttling.patch ./target/linux/rockchip/patches-5.4/213-RK3399-set-critical-CPU-temperature-for-thermal-throttling.patch
 
 # 使用特定的优化
-sed -i 's,-mcpu=generic,-march=armv8-a+crypto+crc -mabi=lp64,g' include/target.mk
+sed -i 's,-mcpu=generic,-mcpu=cortex-a72.cortex-a53+crypto,g' include/target.mk
 cp -f ../PATCH/mbedtls/100-Implements-AES-and-GCM-with-ARMv8-Crypto-Extensions.patch ./package/libs/mbedtls/patches/100-Implements-AES-and-GCM-with-ARMv8-Crypto-Extensions.patch
 sed -i 's,kmod-r8169,kmod-r8168,g' target/linux/rockchip/image/armv8.mk
 
@@ -43,13 +43,13 @@ echo '
 ' >> ./target/linux/rockchip/armv8/config-5.4
 
 # MPTCP
-echo '
-CONFIG_MPTCP=y
-CONFIG_MPTCP_PM_ADVANCED=y
-CONFIG_MPTCP_FULLMESH=y
-CONFIG_DEFAULT_FULLMESH=y
-CONFIG_DEFAULT_MPTCP_PM="fullmesh"
-' >> ./target/linux/rockchip/armv8/config-5.4
+#echo '
+#CONFIG_MPTCP=y
+#CONFIG_MPTCP_PM_ADVANCED=y
+#CONFIG_MPTCP_FULLMESH=y
+#CONFIG_DEFAULT_FULLMESH=y
+#CONFIG_DEFAULT_MPTCP_PM="fullmesh"
+#' >> ./target/linux/rockchip/armv8/config-5.4
 
 #Vermagic
 latest_version="$(curl -s https://github.com/openwrt/openwrt/releases |grep -Eo "v[0-9\.]+\-*r*c*[0-9]*.tar.gz" |sed -n '/21/p' |sed -n 1p |sed 's/v//g' |sed 's/.tar.gz//g')"
