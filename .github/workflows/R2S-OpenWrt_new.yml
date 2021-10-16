@@ -1,10 +1,15 @@
-name: X86-OpenWrt
+name: R2S-OpenWrt
 
 on:
-#  schedule:
-#    - cron: 5 6 * * 0
-  watch:
-    types: started
+  push:
+    branches:
+      - master
+    paths:
+      - ".github/workflows/R2S-OpenWrt_new.yml"
+      - "SEED/R2S/config.seed"
+      - "SCRIPTS/02_prepare_package.sh"
+  schedule:
+   - cron: '10 20 * * *'
 
 jobs:
   build:
@@ -50,7 +55,7 @@ jobs:
     - name: Prepare Mixedwrt
       run: |
         sudo chown -R runner:runner /home/runner/work/YAOF
-        cp -r ./SCRIPTS/X86/. ./SCRIPTS/
+        cp -r ./SCRIPTS/R2S/. ./SCRIPTS/
         cp -r ./SCRIPTS/. ./
         /bin/bash 01_get_ready.sh
     - name: Prepare Package
@@ -70,7 +75,7 @@ jobs:
     - name: Make Config
       run: |
         cd openwrt
-        mv ../SEED/X86/config.seed .config
+        mv ../SEED/R2S/config.seed .config
         #echo -e 'CONFIG_DEVEL=y\nCONFIG_CCACHE=y' >> .config
         make defconfig
     - name: Get Architecture
@@ -110,30 +115,18 @@ jobs:
       run: |
         rm -rf ./artifact/
         mkdir -p ./artifact/
-        mv openwrt/bin/targets/x86/64/*combined.img* ./artifact/
+        mv openwrt/bin/targets/rockchip/armv8/*sysupgrade.img* ./artifact/
         cd ./artifact/
         ls -Ahl
         gzip -d *.gz && exit 0
         gzip --best *.img
         ls -Ahl
-        sha256sum openwrt*x86* | tee X86-GC404-$(date +%Y-%m-%d)-21.02.sha256sum
-        zip X86-GC404-$(date +%Y-%m-%d)-21.02-ext4.zip *ext4-combined*
-        zip X86-GC404-$(date +%Y-%m-%d)-21.02-sfs.zip *squashfs-combined*
+        sha256sum openwrt*r2s* | tee R2S-GC404-$(date +%Y-%m-%d)-21.02.sha256sum
+        zip R2S-GC404-$(date +%Y-%m-%d)-21.02-ext4.zip *r2s*ext4*
+        zip R2S-GC404-$(date +%Y-%m-%d)-21.02-sfs.zip *r2s*squashfs*
         ls -Ahl
     - name: Upload artifact
       uses: actions/upload-artifact@main
       with:
         name: OpenWRT_21.02
         path: ./artifact/
-
-    - name: Create release
-      id: create_release
-      uses: ncipollo/release-action@v1.8.0
-      with:
-        name: OpenWRT-21.02.0
-        allowUpdates: true
-        tag: 21.02.0
-        commit: master
-        replacesArtifacts: true
-        token: ${{ secrets.workflow_token }}
-        artifacts: ./artifact/*.zip

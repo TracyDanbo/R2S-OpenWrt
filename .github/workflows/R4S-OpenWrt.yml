@@ -1,8 +1,8 @@
 name: R4S-OpenWrt
 
 on:
-  schedule:
-    - cron: 5 6 * * 0
+#  schedule:
+#    - cron: 5 6 * * 0
   watch:
     types: started
 
@@ -49,7 +49,7 @@ jobs:
         df -h
     - name: Prepare Mixedwrt
       run: |
-        sudo chown -R runner:runner /home/runner/work/R2S-R4S-X86-OpenWrt
+        sudo chown -R runner:runner /home/runner/work/YAOF
         cp -r ./SCRIPTS/R4S/. ./SCRIPTS/
         cp -r ./SCRIPTS/. ./
         /bin/bash 01_get_ready.sh
@@ -71,37 +71,31 @@ jobs:
       run: |
         cd openwrt
         mv ../SEED/R4S/config.seed .config
+        #echo -e 'CONFIG_DEVEL=y\nCONFIG_CCACHE=y' >> .config
         make defconfig
-
-    - name: Smart chmod
+    - name: Get Architecture
+      working-directory: ${{ github.workspace }}/openwrt
       run: |
-        MY_Filter=$(mktemp)
-        echo '/\.git' >  ${MY_Filter}
-        echo '/\.svn' >> ${MY_Filter}
-        find ./ -maxdepth 1 | grep -v '\./$' | grep -v '/\.git' | xargs -s1024 chmod -R u=rwX,og=rX
-        find ./ -type f | grep -v -f ${MY_Filter} | xargs -s1024 file | grep 'executable\|ELF' | cut -d ':' -f1 | xargs -s1024 chmod 755
-        rm -f ${MY_Filter}
-        unset MY_Filter
-
+        TARGET_DEVICE_ARCH="$(grep "^CONFIG_TARGET_.*_.*=y$" ".config" | head -n 1 | sed 's/^CONFIG_TARGET_//g' | awk -F '_' '{print $1}')"
+        echo "TARGET_DEVICE_ARCH=${TARGET_DEVICE_ARCH}-" >>$GITHUB_ENV
+    - name: Cache
+      uses: klever1988/cachewrtbuild@test
+      with:
+        ccache: 'true'
+        mixkey: ${{ env.TARGET_DEVICE_ARCH }}
+        prefix: ${{ github.workspace }}/openwrt
     - name: Make Download
       run: |
         df -h
         cd openwrt
-        make download -j10
-    - name: Make Toolchain
-      run: |
-        df -h
-        cd openwrt
-        let make_process=$(nproc)+1
-        make toolchain/install -j${make_process} V=s
+        make download -j50
     - name: Compile Openwrt
       id: compileopenwrt
       continue-on-error: true
       run: |
         df -h
         cd openwrt
-        let Make_Process=$(nproc)+1
-        make -j${Make_Process} V=w
+        make -j$(($(nproc) + 1)) || make -j$(($(nproc) + 1)) V=s
         echo $?
     - name: If Error
       if: steps.compileopenwrt.outcome == 'failure'
@@ -109,47 +103,26 @@ jobs:
         cat openwrt/.config
         echo '================================================================'
         cd openwrt && make -j1 V=s
-    - name: Cleaning
-      run: |
-        df -h
-        cd openwrt/bin/targets/rockchip/armv8
-        /bin/bash ../../../../../SCRIPTS/06_cleaning.sh
     - name: Print Disk Space After
       run: df -h
-    - name: Assemble Artifact
-      id: assemble_artifact
+    - name: Organize files
+      id: organize
       run: |
         rm -rf ./artifact/
         mkdir -p ./artifact/
-        cp openwrt/bin/targets/rockchip/armv8/*squashfs-sysupgrade.img.gz ./artifact/
-        cd openwrt
-        cd ..
-        zip -r artifact.zip ./artifact/
-        release_tag="R4S-GC404-$(date +%Y-%m-%d)"
-        echo "##[set-output name=release_tag;]$release_tag"
-    - name: Upload Artifact
+        mv openwrt/bin/targets/rockchip/armv8/*sysupgrade.img* ./artifact/
+        cd ./artifact/
+        ls -Ahl
+        gzip -d *.gz && exit 0
+        gzip --best *.img
+        ls -Ahl
+        sha256sum openwrt*r4s* | tee R4S-GC404-$(date +%Y-%m-%d)-21.02.sha256sum
+        zip R4S-GC404-$(date +%Y-%m-%d)-21.02-ext4.zip *r4s*ext4*
+        zip R4S-GC404-$(date +%Y-%m-%d)-21.02-sfs.zip *r4s*squashfs*
+        ls -Ahl
+    - name: Upload artifact
       uses: actions/upload-artifact@main
       with:
-        name: ${{ steps.assemble_artifact.outputs.release_tag }}-ROM
-        path: ./artifact.zip
-    - name: Create Release
-      id: create_release
-      uses: actions/create-release@main
-      env:
-        GITHUB_TOKEN: ${{ secrets.workflow_token }}
-      with:
-        tag_name: ${{ steps.assemble_artifact.outputs.release_tag }}
-        release_name: 自动发布 ${{ steps.assemble_artifact.outputs.release_tag }}
-        draft: false
-        prerelease: false
+        name: OpenWRT_21.02
+        path: ./artifact/
 
-    - name: Upload Release Asset
-      id: upload-release-asset
-      uses: actions/upload-release-asset@main
-      env:
-        GITHUB_TOKEN: ${{ secrets.workflow_token }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
-        asset_path: ./artifact.zip
-        asset_name: ${{ steps.assemble_artifact.outputs.release_tag }}-ROM.zip
-        asset_content_type: application/zip
