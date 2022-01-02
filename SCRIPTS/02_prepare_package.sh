@@ -22,6 +22,12 @@ sed -i '/mirror02/d' scripts/download.pl
 echo "net.netfilter.nf_conntrack_helper = 1" >>./package/kernel/linux/files/sysctl-nf-conntrack.conf
 
 ### 必要的 Patches ###
+# offload bug fix
+wget -qO - https://github.com/openwrt/openwrt/pull/4849.patch | patch -p1
+# TCP performance optimizations backport from linux/net-next
+cp -f ../PATCH/backport/695-tcp-optimizations.patch ./target/linux/generic/backport-5.4/695-tcp-optimizations.patch
+# introduce "le9" Linux kernel patches
+cp -f ../PATCH/backport/695-le9i.patch ./target/linux/generic/hack-5.4/695-le9i.patch
 # Patch arm64 型号名称
 wget -P target/linux/generic/hack-5.4/ https://github.com/immortalwrt/immortalwrt/raw/openwrt-21.02/target/linux/generic/hack-5.4/312-arm64-cpuinfo-Add-model-name-in-proc-cpuinfo-for-64bit-ta.patch
 # Patch jsonc
@@ -35,10 +41,19 @@ patch -p1 <../PATCH/BBRv2/openwrt-kmod-bbr2.patch
 cp -f ../PATCH/BBRv2/693-Add_BBRv2_congestion_control_for_Linux_TCP.patch ./target/linux/generic/hack-5.4/693-Add_BBRv2_congestion_control_for_Linux_TCP.patch
 wget -qO - https://github.com/openwrt/openwrt/commit/cfaf039.patch | patch -p1
 # CacULE
-wget -qO - https://github.com/QiuSimons/openwrt-NoTengoBattery/commit/7d44cab.patch | patch -p1
-wget https://github.com/hamadmarri/cacule-cpu-scheduler/raw/master/patches/CacULE/v5.4/cacule-5.4.patch -O ./target/linux/generic/hack-5.4/694-cacule-5.4.patch
+#wget -qO - https://github.com/QiuSimons/openwrt-NoTengoBattery/commit/7d44cab.patch | patch -p1
+#wget https://github.com/hamadmarri/cacule-cpu-scheduler/raw/master/patches/CacULE/v5.4/cacule-5.4.patch -O ./target/linux/generic/hack-5.4/694-cacule-5.4.patch
+# MuQSS
+#cp -f ../PATCH/MuQSS/0001-MultiQueue-Skiplist-Scheduler-v0.196.patch ./target/linux/generic/hack-5.4/694-0001-MultiQueue-Skiplist-Scheduler-v0.196.patch
+#cp -f ../PATCH/MuQSS/0002-MuQSS-Fix-build-error-on-config-leak.patch ./target/linux/generic/hack-5.4/694-0002-MuQSS-Fix-build-error-on-config-leak.patch
+#cp -f ../PATCH/MuQSS/0003-Work-around-x86-only-llc-stuff.patch ./target/linux/generic/hack-5.4/694-0003-Work-around-x86-only-llc-stuff.patch
+# BMQ
+#cp -f ../PATCH/BMQ/01-bmq_v5.4-r2.patch ./target/linux/generic/hack-5.4/694-01-bmq_v5.4-r2.patch
+# PDS
+#cp -f ../PATCH/PDS/v5.4_undead-pds099o.patch ./target/linux/generic/hack-5.4/694-v5.4_undead-pds099o.patch
+#wget https://github.com/Frogging-Family/linux-tkg/raw/master/linux-tkg-patches/5.4/0005-glitched-pds.patch -O ./target/linux/generic/hack-5.4/694-0005-02-glitched-pds.patch
 # UKSM
-cp -f ../PATCH/UKSM/695-uksm-5.4.patch ./target/linux/generic/hack-5.4/695-uksm-5.4.patch
+#cp -f ../PATCH/UKSM/695-uksm-5.4.patch ./target/linux/generic/hack-5.4/695-uksm-5.4.patch
 # LRNG
 cp -rf ../PATCH/LRNG/* ./target/linux/generic/hack-5.4/
 echo '
@@ -96,6 +111,8 @@ sed -i 's,noinitrd,noinitrd mitigations=off,g' target/linux/x86/image/grub-pc.cf
 svn co https://github.com/immortalwrt/immortalwrt/branches/openwrt-21.02/package/emortal/autocore package/lean/autocore
 rm -rf ./feeds/packages/utils/coremark
 svn co https://github.com/immortalwrt/packages/trunk/utils/coremark feeds/packages/utils/coremark
+# DPDK
+svn co https://github.com/QiuSimons/OpenWrt-Add/trunk/dpdk package/new/dpdk
 # 更换 Nodejs 版本
 rm -rf ./feeds/packages/lang/node
 svn co https://github.com/nxhack/openwrt-node-packages/trunk/node feeds/packages/lang/node
@@ -120,6 +137,7 @@ git clone -b master --depth 1 https://github.com/BROBIRD/openwrt-r8168.git packa
 patch -p1 <../PATCH/r8168/r8168-fix_LAN_led-for_r4s-from_TL.patch
 # R8152驱动
 svn co https://github.com/immortalwrt/immortalwrt/branches/master/package/kernel/r8152 package/new/r8152
+sed -i 's,kmod-usb-net-rtl8152,kmod-usb-net-rtl8152-vendor,g' target/linux/rockchip/image/armv8.mk
 # UPX 可执行软件压缩
 sed -i '/patchelf pkgconf/i\tools-y += ucl upx' ./tools/Makefile
 sed -i '\/autoconf\/compile :=/i\$(curdir)/upx/compile := $(curdir)/ucl/compile' ./tools/Makefile
@@ -141,6 +159,8 @@ sed -i '/\t)/a\\t$(STAGING_DIR_HOST)/bin/upx --lzma --best $(GO_PKG_BUILD_BIN_DI
 sed -i '/init/d' feeds/packages/net/adguardhome/Makefile
 # Argon 主题
 git clone https://github.com/jerrykuku/luci-theme-argon.git package/new/luci-theme-argon
+wget -P package/new/luci-theme-argon/htdocs/luci-static/argon/background/ https://github.com/QiuSimons/OpenWrt-Add/raw/master/5808303.jpg
+rm -rf ./package/new/luci-theme-argon/htdocs/luci-static/argon/background/README.md
 #pushd package/new/luci-theme-argon
 #git checkout 3b15d06
 #popd
@@ -153,7 +173,7 @@ svn co https://github.com/coolsnowwolf/lede/trunk/package/lean/luci-app-autorebo
 # Boost 通用即插即用
 svn co https://github.com/QiuSimons/slim-wrt/branches/main/slimapps/application/luci-app-boostupnp package/new/luci-app-boostupnp
 rm -rf ./feeds/packages/net/miniupnpd
-svn co https://github.com/openwrt/packages/trunk/net/miniupnpd feeds/packages/net/miniupnpd
+svn co https://github.com/coolsnowwolf/packages/trunk/net/miniupnpd feeds/packages/net/miniupnpd
 # ChinaDNS
 git clone -b luci --depth 1 https://github.com/QiuSimons/openwrt-chinadns-ng.git package/new/luci-app-chinadns-ng
 svn co https://github.com/xiaorouji/openwrt-passwall/trunk/chinadns-ng package/new/chinadns-ng
@@ -174,6 +194,12 @@ svn co https://github.com/kenzok8/openwrt-packages/trunk/luci-app-aliddns feeds/
 ln -sf ../../../feeds/luci/applications/luci-app-aliddns ./package/feeds/luci/luci-app-aliddns
 # Docker 容器（会导致 OpenWrt 出现 UDP 转发问题，慎用）
 sed -i 's/+docker/+docker \\\n\t+dockerd/g' ./feeds/luci/applications/luci-app-dockerman/Makefile
+sed -i '/sysctl.d/d' feeds/packages/utils/dockerd/Makefile
+# DiskMan
+mkdir -p package/new/luci-app-diskman && \
+wget https://raw.githubusercontent.com/lisaac/luci-app-diskman/master/applications/luci-app-diskman/Makefile -O package/new/luci-app-diskman/Makefile
+mkdir -p package/new/parted && \
+wget https://raw.githubusercontent.com/lisaac/luci-app-diskman/master/Parted.Makefile -O package/new/parted/Makefile
 # Dnsfilter
 git clone --depth 1 https://github.com/kiddin9/luci-app-dnsfilter.git package/new/luci-app-dnsfilter
 # Dnsproxy
@@ -214,7 +240,7 @@ svn co https://github.com/coolsnowwolf/lede/trunk/package/lean/luci-app-netdata 
 git clone -b master --depth 1 https://github.com/destan19/OpenAppFilter.git package/new/OpenAppFilter
 pushd package/new/OpenAppFilter
 wget -qO - https://github.com/QiuSimons/OpenAppFilter-destan19/commit/9088cc2.patch | patch -p1
-wget https://github.com/destan19/destan19.github.io/raw/main/assets/oaf/open_feature/feature-06-18.cfg -O ./open-app-filter/files/feature.cfg
+wget https://destan19.github.io/assets/oaf/open_feature/feature-06-18.cfg -O ./open-app-filter/files/feature.cfg
 popd
 # OLED 驱动程序
 git clone -b master --depth 1 https://github.com/NateLol/luci-app-oled.git package/new/luci-app-oled
@@ -229,7 +255,7 @@ svn co https://github.com/xiaorouji/openwrt-passwall/trunk/luci-app-passwall pac
 sed -i 's,default n,default y,g' package/new/luci-app-passwall/Makefile
 sed -i '/Trojan_GO:/d' package/new/luci-app-passwall/Makefile
 sed -i '/V2ray:/d' package/new/luci-app-passwall/Makefile
-sed -i '/V2ray_Plugin:/d' package/new/luci-app-passwall/Makefile
+sed -i '/Plugin:/d' package/new/luci-app-passwall/Makefile
 wget -P package/new/luci-app-passwall/ https://github.com/QiuSimons/OpenWrt-Add/raw/master/move_2_services.sh
 chmod -R 755 ./package/new/luci-app-passwall/move_2_services.sh
 pushd package/new/luci-app-passwall
@@ -240,7 +266,7 @@ svn co https://github.com/Lienol/openwrt-packages/trunk/net/https-dns-proxy feed
 svn co https://github.com/xiaorouji/openwrt-passwall/trunk/tcping package/new/tcping
 svn co https://github.com/xiaorouji/openwrt-passwall/trunk/trojan-go package/new/trojan-go
 svn co https://github.com/xiaorouji/openwrt-passwall/trunk/brook package/new/brook
-svn co https://github.com/xiaorouji/openwrt-passwall/trunk/trojan-plus package/new/trojan-plus
+svn co https://github.com/QiuSimons/OpenWrt-Add/trunk/trojan-plus package/new/trojan-plus
 svn co https://github.com/xiaorouji/openwrt-passwall/trunk/ssocks package/new/ssocks
 svn co https://github.com/xiaorouji/openwrt-passwall/trunk/hysteria package/new/hysteria
 # qBittorrent 下载
@@ -271,7 +297,6 @@ svn co https://github.com/coolsnowwolf/lede/trunk/package/lean/dns2socks package
 svn co https://github.com/coolsnowwolf/lede/trunk/package/lean/redsocks2 package/lean/redsocks2
 svn co https://github.com/coolsnowwolf/lede/trunk/package/lean/ipt2socks package/lean/ipt2socks
 svn co https://github.com/coolsnowwolf/packages/trunk/net/shadowsocks-libev package/lean/shadowsocks-libev
-svn co https://github.com/fw876/helloworld/trunk/trojan package/lean/trojan
 svn co https://github.com/fw876/helloworld/trunk/simple-obfs package/lean/simple-obfs
 svn co https://github.com/fw876/helloworld/trunk/naiveproxy package/lean/naiveproxy
 svn co https://github.com/fw876/helloworld/trunk/v2ray-core package/lean/v2ray-core
@@ -295,9 +320,9 @@ pushd package/lean/luci-app-ssr-plus
 sed -i 's,default n,default y,g' Makefile
 sed -i '/Plugin:/d' Makefile
 sed -i '/result.encrypt_method/a\result.fast_open = "1"' root/usr/share/shadowsocksr/subscribe.lua
-sed -i 's,ispip.clang.cn/all_cn,cdn.jsdelivr.net/gh/QiuSimons/Chnroute@master/dist/chnroute/chnroute,' root/etc/init.d/shadowsocksr
+sed -i 's,ispip.clang.cn/all_cn,gh.404delivr.workers.dev/https://github.com/QiuSimons/Chnroute/raw/master/dist/chnroute/chnroute,' root/etc/init.d/shadowsocksr
 sed -i 's,YW5vbnltb3Vz/domain-list-community/release/gfwlist.txt,Loyalsoldier/v2ray-rules-dat/release/gfw.txt,' root/etc/init.d/shadowsocksr
-sed -i '/Clang.CN.CIDR/a\o:value("https://cdn.jsdelivr.net/gh/QiuSimons/Chnroute@master/dist/chnroute/chnroute.txt", translate("QiuSimons/Chnroute"))' luasrc/model/cbi/shadowsocksr/advanced.lua
+sed -i '/Clang.CN.CIDR/a\o:value("https://gh.404delivr.workers.dev/https://github.com/QiuSimons/Chnroute/raw/master/dist/chnroute/chnroute.txt", translate("QiuSimons/Chnroute"))' luasrc/model/cbi/shadowsocksr/advanced.lua
 popd
 # socat
 svn co https://github.com/Lienol/openwrt-package/trunk/luci-app-socat package/new/luci-app-socat
@@ -329,7 +354,7 @@ svn co https://github.com/coolsnowwolf/lede/trunk/package/lean/vlmcsd package/le
 git clone -b master --depth 1 https://github.com/jerrykuku/luci-app-vssr.git package/lean/luci-app-vssr
 git clone -b master --depth 1 https://github.com/jerrykuku/lua-maxminddb.git package/lean/lua-maxminddb
 sed -i 's,default n,default y,g' package/lean/luci-app-vssr/Makefile
-sed -i '/Xray_plugin:/d' package/lean/luci-app-vssr/Makefile
+sed -i '/plugin:/d' package/lean/luci-app-vssr/Makefile
 #sed -i '/plugin:v2ray/d' package/lean/luci-app-vssr/Makefile
 sed -i '/result.encrypt_method/a\result.fast_open = "1"' package/lean/luci-app-vssr/root/usr/share/vssr/subscribe.lua
 sed -i 's,ispip.clang.cn/all_cn.txt,raw.sevencdn.com/QiuSimons/Chnroute/master/dist/chnroute/chnroute.txt,g' package/lean/luci-app-vssr/luasrc/controller/vssr.lua
@@ -342,15 +367,17 @@ git clone -b master --depth 1 https://github.com/brvphoenix/luci-app-wrtbwmon.gi
 # 迅雷快鸟宽带加速
 git clone --depth 1 https://github.com/kiddin9/luci-app-xlnetacc.git package/lean/luci-app-xlnetacc
 # Zerotier
-#svn co https://github.com/immortalwrt/luci/trunk/applications/luci-app-zerotier feeds/luci/applications/luci-app-zerotier
-#wget -P feeds/luci/applications/luci-app-zerotier/ https://github.com/QiuSimons/OpenWrt-Add/raw/master/move_2_services.sh
-#chmod -R 755 ./feeds/luci/applications/luci-app-zerotier/move_2_services.sh
-#pushd feeds/luci/applications/luci-app-zerotier
-#bash move_2_services.sh
-#popd
-#ln -sf ../../../feeds/luci/applications/luci-app-zerotier ./package/feeds/luci/luci-app-zerotier
-#rm -rf ./feeds/packages/net/zerotier/files/etc/init.d/zerotier
-#sed -i '/Default,one/a\\t$(STAGING_DIR_HOST)/bin/upx --lzma --best $(PKG_BUILD_DIR)/zerotier-one' feeds/packages/net/zerotier/Makefile
+svn co https://github.com/immortalwrt/luci/trunk/applications/luci-app-zerotier feeds/luci/applications/luci-app-zerotier
+wget -P feeds/luci/applications/luci-app-zerotier/ https://github.com/QiuSimons/OpenWrt-Add/raw/master/move_2_services.sh
+chmod -R 755 ./feeds/luci/applications/luci-app-zerotier/move_2_services.sh
+pushd feeds/luci/applications/luci-app-zerotier
+bash move_2_services.sh
+popd
+ln -sf ../../../feeds/luci/applications/luci-app-zerotier ./package/feeds/luci/luci-app-zerotier
+rm -rf ./feeds/packages/net/zerotier
+svn co https://github.com/openwrt/packages/trunk/net/zerotier feeds/packages/net/zerotier
+rm -rf ./feeds/packages/net/zerotier/files/etc/init.d/zerotier
+sed -i '/Default,one/a\\t$(STAGING_DIR_HOST)/bin/upx --lzma --best $(PKG_BUILD_DIR)/zerotier-one' feeds/packages/net/zerotier/Makefile
 # 翻译及部分功能优化
 svn co https://github.com/QiuSimons/OpenWrt-Add/trunk/addition-trans-zh package/lean/lean-translate
 
