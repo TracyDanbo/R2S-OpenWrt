@@ -538,6 +538,9 @@ CONFIG_LRNG_DFLT_DRNG_CHACHA20=y
 # CONFIG_IR_SIR is not set
 # CONFIG_RC_XBOX_DVD is not set
 # CONFIG_IR_TOY is not set
+
+CONFIG_NFSD=y
+
 ' >>./target/linux/generic/config-5.10
 
 ### Shortcut-FE 部分 ###
