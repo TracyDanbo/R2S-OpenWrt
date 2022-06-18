@@ -51,6 +51,10 @@ jobs:
         /bin/bash 02_prepare_package.sh
         /bin/bash 02_target_only.sh
         /bin/bash 04_remove_upx.sh
+    - name: setting Package
+      run: |
+        cd openwrt
+        /bin/bash 02.5_setting_package.sh
     - name: Convert Translation
       run: |
         cd openwrt
