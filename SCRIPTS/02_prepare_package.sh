@@ -25,9 +25,14 @@ echo "net.netfilter.nf_conntrack_helper = 1" >>./package/kernel/linux/files/sysc
 
 
 ### 必要的 Patches ###
-# introduce "le9" Linux kernel patches
-cp -f ../PATCH/backport/995-le9i.patch ./target/linux/generic/hack-5.10/995-le9i.patch
 cp -f ../PATCH/backport/290-remove-kconfig-CONFIG_I8K.patch ./target/linux/generic/hack-5.10/290-remove-kconfig-CONFIG_I8K.patch
+# introduce "MG-LRU" Linux kernel patches
+cp -rf ../PATCH/backport/MG-LRU/* ./target/linux/generic/pending-5.10/
+echo '
+CONFIG_LRU_GEN=y
+CONFIG_LRU_GEN_ENABLED=y
+# CONFIG_LRU_GEN_STATS is not set
+' >>./target/linux/generic/config-5.10
 # ZSTD
 cp -rf ../PATCH/backport/ZSTD/* ./target/linux/generic/hack-5.10/
 # Futex
@@ -102,7 +107,8 @@ svn export https://github.com/Lienol/openwrt/trunk/package/network/fullconenat p
 ### 获取额外的基础软件包 ###
 # 更换为 ImmortalWrt Uboot 以及 Target
 rm -rf ./target/linux/rockchip
-svn export -r 5010 https://github.com/coolsnowwolf/lede/trunk/target/linux/rockchip target/linux/rockchip
+svn export https://github.com/coolsnowwolf/lede/trunk/target/linux/rockchip target/linux/rockchip
+#svn export -r 5010 https://github.com/coolsnowwolf/lede/trunk/target/linux/rockchip target/linux/rockchip
 #rm -rf ./target/linux/rockchip/image/armv8.mk
 #wget -P target/linux/rockchip/image/ https://github.com/coolsnowwolf/lede/raw/3211a97/target/linux/rockchip/image/armv8.mk
 rm -rf ./target/linux/rockchip/Makefile
@@ -110,11 +116,15 @@ wget -P target/linux/rockchip/ https://github.com/openwrt/openwrt/raw/openwrt-22
 rm -rf ./target/linux/rockchip/patches-5.10/002-net-usb-r8152-add-LED-configuration-from-OF.patch
 rm -rf ./target/linux/rockchip/patches-5.10/003-dt-bindings-net-add-RTL8152-binding-documentation.patch
 
+cp -rf ../PATCH/dts/* ./target/linux/rockchip/files-5.10/arch/arm64/boot/dts/rockchip/
+
 rm -rf ./package/boot/uboot-rockchip
-svn export -r 5010 https://github.com/coolsnowwolf/lede/trunk/package/boot/uboot-rockchip package/boot/uboot-rockchip
+svn export https://github.com/coolsnowwolf/lede/trunk/package/boot/uboot-rockchip package/boot/uboot-rockchip
+#svn export -r 5010 https://github.com/coolsnowwolf/lede/trunk/package/boot/uboot-rockchip package/boot/uboot-rockchip
 sed -i '/r2c-rk3328:arm-trusted/d' package/boot/uboot-rockchip/Makefile
 
-svn export -r 5010 https://github.com/coolsnowwolf/lede/trunk/package/boot/arm-trusted-firmware-rockchip-vendor package/boot/arm-trusted-firmware-rockchip-vendor
+svn export https://github.com/coolsnowwolf/lede/trunk/package/boot/arm-trusted-firmware-rockchip-vendor package/boot/arm-trusted-firmware-rockchip-vendor
+#svn export -r 5010 https://github.com/coolsnowwolf/lede/trunk/package/boot/arm-trusted-firmware-rockchip-vendor package/boot/arm-trusted-firmware-rockchip-vendor
 
 rm -rf ./package/kernel/linux/modules/video.mk
 wget -P package/kernel/linux/modules/ https://github.com/immortalwrt/immortalwrt/raw/master/package/kernel/linux/modules/video.mk
@@ -124,6 +134,11 @@ echo '
 # CONFIG_PHY_ROCKCHIP_NANENG_COMBO_PHY is not set
 # CONFIG_PHY_ROCKCHIP_SNPS_PCIE3 is not set
 ' >>./target/linux/rockchip/armv8/config-5.10
+
+# Dnsmasq
+git clone -b mine --depth 1 https://git.openwrt.org/openwrt/staging/ldir.git
+rm -rf ./package/network/services/dnsmasq
+cp -rf ./ldir/package/network/services/dnsmasq ./package/network/services/
 
 # LRNG
 cp -rf ../PATCH/LRNG/* ./target/linux/generic/hack-5.10/
@@ -214,7 +229,6 @@ svn export https://github.com/coolsnowwolf/luci/trunk/applications/luci-app-auto
 # Boost 通用即插即用
 svn export https://github.com/QiuSimons/slim-wrt/branches/main/slimapps/application/luci-app-boostupnp package/new/luci-app-boostupnp
 rm -rf ./feeds/packages/net/miniupnpd
-#git clone -b main --depth 1 https://github.com/msylgj/miniupnpd.git feeds/packages/net/miniupnpd
 svn export https://github.com/openwrt/packages/trunk/net/miniupnpd feeds/packages/net/miniupnpd
 pushd feeds/packages
 wget -qO- https://github.com/openwrt/packages/commit/785bbcb.patch | patch -p1
@@ -222,9 +236,10 @@ wget -qO- https://github.com/openwrt/packages/commit/d811cb4.patch | patch -p1
 wget -qO- https://github.com/openwrt/packages/commit/9a2da85.patch | patch -p1
 wget -qO- https://github.com/openwrt/packages/commit/71dc090.patch | patch -p1
 popd
+sed -i '/firewall4.include/d' feeds/packages/net/miniupnpd/Makefile
 rm -rf ./feeds/luci/applications/luci-app-upnp
-git clone -b main --depth 1 https://github.com/msylgj/luci-app-upnp feeds/luci/applications/luci-app-upnp
-#svn export https://github.com/openwrt/luci/trunk/applications/luci-app-upnp feeds/luci/applications/luci-app-upnp
+#git clone -b main --depth 1 https://github.com/msylgj/luci-app-upnp feeds/luci/applications/luci-app-upnp
+svn export https://github.com/openwrt/luci/trunk/applications/luci-app-upnp feeds/luci/applications/luci-app-upnp
 pushd feeds/luci
 wget -qO- https://github.com/openwrt/luci/commit/0b5fb915.patch | patch -p1
 popd
@@ -232,7 +247,7 @@ popd
 git clone -b luci --depth 1 https://github.com/QiuSimons/openwrt-chinadns-ng.git package/new/luci-app-chinadns-ng
 svn export https://github.com/xiaorouji/openwrt-passwall/trunk/chinadns-ng package/new/chinadns-ng
 # CPU 控制相关
-svn export https://github.com/immortalwrt/luci/trunk/applications/luci-app-cpufreq feeds/luci/applications/luci-app-cpufreq
+svn export -r 19495 https://github.com/immortalwrt/luci/trunk/applications/luci-app-cpufreq feeds/luci/applications/luci-app-cpufreq
 ln -sf ../../../feeds/luci/applications/luci-app-cpufreq ./package/feeds/luci/luci-app-cpufreq
 sed -i 's,1608,1800,g' feeds/luci/applications/luci-app-cpufreq/root/etc/uci-defaults/10-cpufreq
 sed -i 's,2016,2208,g' feeds/luci/applications/luci-app-cpufreq/root/etc/uci-defaults/10-cpufreq
@@ -253,6 +268,7 @@ svn export https://github.com/lisaac/luci-app-dockerman/trunk/applications/luci-
 sed -i '/auto_start/d' feeds/luci/applications/luci-app-dockerman/root/etc/uci-defaults/luci-app-dockerman
 pushd feeds/packages
 wget -qO- https://github.com/openwrt/packages/commit/ed7396a.patch | patch -p1
+wget -qO- https://github.com/openwrt/packages/commit/a27e8df.patch | patch -p1
 popd
 rm -rf ./feeds/luci/collections/luci-lib-docker
 svn export https://github.com/lisaac/luci-lib-docker/trunk/collections/luci-lib-docker feeds/luci/collections/luci-lib-docker
@@ -544,7 +560,8 @@ CONFIG_NFSD=y
 ' >>./target/linux/generic/config-5.10
 ### Shortcut-FE 部分 ###
 # Patch Kernel 以支持 Shortcut-FE
-wget -P target/linux/generic/hack-5.10/ https://github.com/coolsnowwolf/lede/raw/master/target/linux/generic/hack-5.10/953-net-patch-linux-kernel-to-support-shortcut-fe.patch
+#wget -P target/linux/generic/hack-5.10/ https://github.com/coolsnowwolf/lede/raw/master/target/linux/generic/hack-5.10/953-net-patch-linux-kernel-to-support-shortcut-fe.patch
+wget -P target/linux/generic/hack-5.10/ https://github.com/coolsnowwolf/lede/raw/2b04e06/target/linux/generic/hack-5.10/953-net-patch-linux-kernel-to-support-shortcut-fe.patch
 # Patch LuCI 以增添 Shortcut-FE 开关
 patch -p1 < ../PATCH/firewall/luci-app-firewall_add_sfe_switch.patch
 # Shortcut-FE 相关组件
