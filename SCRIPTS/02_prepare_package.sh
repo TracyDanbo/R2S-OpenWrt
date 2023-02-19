@@ -24,6 +24,9 @@ sed -i '/mirror02/d' scripts/download.pl
 echo "net.netfilter.nf_conntrack_helper = 1" >>./package/kernel/linux/files/sysctl-nf-conntrack.conf
 # Nginx
 sed -i "s/client_max_body_size 128M/client_max_body_size 2048M/g" feeds/packages/net/nginx-util/files/uci.conf.template
+sed -i '/ubus_parallel_req/a\        ubus_script_timeout 600;' feeds/packages/net/nginx/files-luci-support/60_nginx-luci-support
+sed -ri "/luci-webui.socket/i\ \t\tuwsgi_send_timeout 600\;\n\t\tuwsgi_connect_timeout 600\;\n\t\tuwsgi_read_timeout 600\;" feeds/packages/net/nginx/files-luci-support/luci.locations
+sed -ri "/luci-cgi_io.socket/i\ \t\tuwsgi_send_timeout 600\;\n\t\tuwsgi_connect_timeout 600\;\n\t\tuwsgi_read_timeout 600\;" feeds/packages/net/nginx/files-luci-support/luci.locations
 
 ### 必要的 Patches ###
 # introduce "MG-LRU" Linux kernel patches
@@ -104,6 +107,7 @@ sed -i 's,noinitrd,noinitrd mitigations=off,g' target/linux/x86/image/grub-pc.cf
 # Dnsmasq
 rm -rf ./package/network/services/dnsmasq
 cp -rf ../openwrt_ma/package/network/services/dnsmasq ./package/network/services/dnsmasq
+cp -rf ../openwrt_luci_ma/modules/luci-mod-network/htdocs/luci-static/resources/view/network/dhcp.js ./feeds/luci/modules/luci-mod-network/htdocs/luci-static/resources/view/network/
 
 
 ### 获取额外的 LuCI 应用、主题和依赖 ###
@@ -147,7 +151,7 @@ patch -p1 <../PATCH/r8168/r8168-fix_LAN_led-for_r4s-from_TL.patch
 # R8152驱动
 cp -rf ../immortalwrt/package/kernel/r8152 ./package/new/r8152
 # r8125驱动
-cp -rf ../lede/package/lean/r8125 ./package/new/r8125
+git clone https://github.com/sbwml/package_kernel_r8125 package/new/r8125
 # igc-backport
 cp -rf ../PATCH/igc-files-5.10 ./target/linux/x86/files-5.10
 # UPX 可执行软件压缩
@@ -292,18 +296,17 @@ cp -rf ../OpenWrt-Add/trojan-plus ./package/new/trojan-plus
 cp -rf ../passwall_pkg/xray-plugin ./package/new/xray-plugin
 # Passwall 白名单
 echo '
-checkip.synology.com
-checkipv6.synology.com
-checkport.synology.com
-ddns.synology.com
-account.synology.com
-whatismyip.akamai.com
-checkip.dyndns.org
 teamviewer.com
-bing.com
-api.ipify.org
 epicgames.com
-emby.kyarucloud.moe
+dangdang.com
+account.synology.com
+ddns.synology.com
+checkip.synology.com
+checkip.dyndns.org
+checkipv6.synology.com
+ntp.aliyun.com
+cn.ntp.org.cn
+ntp.ntsc.ac.cn
 ' >>./package/new/luci-app-passwall/root/usr/share/passwall/rules/direct_host
 # qBittorrent 下载
 cp -rf ../lede_luci/applications/luci-app-qbittorrent ./package/new/luci-app-qbittorrent
@@ -371,6 +374,12 @@ ln -sf ../../../feeds/packages/libs/toml11 ./package/feeds/packages/toml11
 git clone -b js --depth 1 https://github.com/UnblockNeteaseMusic/luci-app-unblockneteasemusic.git package/new/UnblockNeteaseMusic
 # uwsgi
 sed -i 's,procd_set_param stderr 1,procd_set_param stderr 0,g' feeds/packages/net/uwsgi/files/uwsgi.init
+sed -i 's,buffer-size = 10000,buffer-size = 131072,g' feeds/packages/net/uwsgi/files-luci-support/luci-webui.ini
+sed -i 's,logger = luci,#logger = luci,g' feeds/packages/net/uwsgi/files-luci-support/luci-webui.ini
+sed -i '$a cgi-timeout = 600' feeds/packages/net/uwsgi/files-luci-support/luci-*.ini
+# rpcd
+sed -i 's/option timeout 30/option timeout 60/g' package/system/rpcd/files/rpcd.config
+sed -i 's#20) \* 1000#60) \* 1000#g' feeds/luci/modules/luci-base/htdocs/luci-static/resources/rpc.js
 # USB 打印机
 cp -rf ../lede_luci/applications/luci-app-usb-printer ./package/new/luci-app-usb-printer
 # UU加速器
