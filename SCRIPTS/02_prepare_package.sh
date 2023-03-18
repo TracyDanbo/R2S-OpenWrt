@@ -24,6 +24,7 @@ sed -i '/mirror02/d' scripts/download.pl
 echo "net.netfilter.nf_conntrack_helper = 1" >>./package/kernel/linux/files/sysctl-nf-conntrack.conf
 # Nginx
 sed -i "s/client_max_body_size 128M/client_max_body_size 2048M/g" feeds/packages/net/nginx-util/files/uci.conf.template
+sed -i '/client_max_body_size/a\\tclient_body_buffer_size 8192M;' feeds/packages/net/nginx-util/files/uci.conf.template
 sed -i '/ubus_parallel_req/a\        ubus_script_timeout 600;' feeds/packages/net/nginx/files-luci-support/60_nginx-luci-support
 sed -ri "/luci-webui.socket/i\ \t\tuwsgi_send_timeout 600\;\n\t\tuwsgi_connect_timeout 600\;\n\t\tuwsgi_read_timeout 600\;" feeds/packages/net/nginx/files-luci-support/luci.locations
 sed -ri "/luci-cgi_io.socket/i\ \t\tuwsgi_send_timeout 600\;\n\t\tuwsgi_connect_timeout 600\;\n\t\tuwsgi_read_timeout 600\;" feeds/packages/net/nginx/files-luci-support/luci.locations
@@ -89,6 +90,8 @@ rm -rf ./package/firmware/linux-firmware/Makefile
 cp -rf ../lede/package/firmware/linux-firmware/Makefile ./package/firmware/linux-firmware/Makefile
 mkdir -p target/linux/rockchip/files-5.10
 cp -rf ../PATCH/files-5.10 ./target/linux/rockchip/
+sed -i 's,+LINUX_6_1:kmod-drm-display-helper,,g' target/linux/rockchip/modules.mk
+sed -i '/drm_dp_aux_bus\.ko/d' target/linux/rockchip/modules.mk
 # enable tso for nanopi-r4s
 sed -i '/set_interface_core 20 "eth1"/a \\tethtool -K eth1 tso on sg on tx on' target/linux/rockchip/armv8/base-files/etc/hotplug.d/net/40-net-smp-affinity
 rm -rf ./package/boot/uboot-rockchip
@@ -96,6 +99,7 @@ cp -rf ../lede/package/boot/uboot-rockchip ./package/boot/uboot-rockchip
 cp -rf ../lede/package/boot/arm-trusted-firmware-rockchip-vendor ./package/boot/arm-trusted-firmware-rockchip-vendor
 rm -rf ./package/kernel/linux/modules/video.mk
 cp -rf ../immortalwrt/package/kernel/linux/modules/video.mk ./package/kernel/linux/modules/video.mk
+sed -i '/nouveau\.ko/d' package/kernel/linux/modules/video.mk
 # Disable Mitigations
 sed -i 's,rootwait,rootwait mitigations=off,g' target/linux/rockchip/image/mmc.bootscript
 sed -i 's,rootwait,rootwait mitigations=off,g' target/linux/rockchip/image/nanopi-r2s.bootscript
@@ -110,6 +114,29 @@ cp -rf ../openwrt_luci_ma/modules/luci-mod-network/htdocs/luci-static/resources/
 
 
 ### 获取额外的 LuCI 应用、主题和依赖 ###
+# dae ready
+cp -rf ../openwrt_ma/config/Config-kernel.in ./config/Config-kernel.in
+#sed -i '/HOST_LOADLIBES/d' include/kernel-build.mk
+#sed -i '/HOST_LOADLIBES/d' include/kernel.mk
+#sed -i 's,KBUILD_HOSTLDLIBS,KBUILD_HOSTLDFLAGS,g' include/kernel.mk
+#sed -i '/HOST_LOADLIBES/d' package/kernel/bpf-headers/Makefile
+wget -qO - https://github.com/openwrt/openwrt/commit/21733cb6.patch | patch -p1
+wget -qO - https://github.com/openwrt/openwrt/commit/aa95787e.patch | patch -p1
+wget -qO - https://github.com/openwrt/openwrt/commit/29d7d6a8.patch | patch -p1
+rm -rf ./tools/dwarves
+cp -rf ../openwrt_ma/tools/dwarves ./tools/dwarves
+rm -rf ./tools/elfutils
+cp -rf ../openwrt_ma/tools/elfutils ./tools/elfutils
+cp -rf ../openwrt_ma/target/linux/generic/backport-5.10/200-v5.18-tools-resolve_btfids-Build-with-host-flags.patch ./target/linux/generic/backport-5.10/200-v5.18-tools-resolve_btfids-Build-with-host-flags.patch
+rm -rf ./feeds/packages/net/frr
+cp -rf ../openwrt_pkg_ma/net/frr feeds/packages/net/frr
+#rm -rf ./package/kernel/mac80211
+#cp -rf ../openwrt_ma/package/kernel/mac80211 ./package/kernel/mac80211
+#sed -i '/ +kmod-qrtr-mhi/d' package/kernel/mac80211/ath.mk
+#sed -i '/ +kmod-qrtr-smd/d' package/kernel/mac80211/ath.mk
+# i915
+wget -qO - https://github.com/openwrt/openwrt/commit/c21a3570.patch | patch -p1
+cp -rf ../lede/target/linux/x86/64/config-5.10 ./target/linux/x86/64/config-5.10
 # Haproxy
 rm -rf ./feeds/packages/net/haproxy
 cp -rf ../openwrt_pkg_ma/net/haproxy feeds/packages/net/haproxy
@@ -122,6 +149,9 @@ sed -i 's/"getTempInfo" /"getTempInfo", "getCPUBench", "getCPUUsage" /g' package
 sed -i '/"$threads"/d' package/new/autocore/files/x86/autocore
 rm -rf ./feeds/packages/utils/coremark
 cp -rf ../immortalwrt_pkg/utils/coremark ./feeds/packages/utils/coremark
+# Airconnect
+cp -rf ../OpenWrt-Add/airconnect ./package/new/airconnect
+cp -rf ../OpenWrt-Add/luci-app-airconnect ./package/new/luci-app-airconnect
 # luci-app-irqbalance
 cp -rf ../OpenWrt-Add/luci-app-irqbalance ./package/new/luci-app-irqbalance
 # 更换 Nodejs 版本
@@ -229,8 +259,7 @@ sed -i '/sysctl.d/d' feeds/packages/utils/dockerd/Makefile
 rm -rf ./feeds/luci/collections/luci-lib-docker
 cp -rf ../docker_lib/collections/luci-lib-docker ./feeds/luci/collections/luci-lib-docker
 # DiskMan
-mkdir -p package/new/luci-app-diskman && \
-wget https://raw.githubusercontent.com/lisaac/luci-app-diskman/master/applications/luci-app-diskman/Makefile -O package/new/luci-app-diskman/Makefile
+cp -rf ../diskman/applications/luci-app-diskman ./package/new/luci-app-diskman
 mkdir -p package/new/parted && \
 wget https://raw.githubusercontent.com/lisaac/luci-app-diskman/master/Parted.Makefile -O package/new/parted/Makefile
 # Dnsfilter
@@ -325,6 +354,7 @@ cp -rf ../ssrp/redsocks2 ./package/new/redsocks2
 cp -rf ../ssrp/trojan ./package/new/trojan
 cp -rf ../ssrp/tcping ./package/new/tcping
 cp -rf ../ssrp/dns2tcp ./package/new/dns2tcp
+cp -rf ../ssrp/gn ./package/new/gn
 cp -rf ../ssrp/shadowsocksr-libev ./package/new/shadowsocksr-libev
 cp -rf ../ssrp/simple-obfs ./package/new/simple-obfs
 cp -rf ../ssrp/naiveproxy ./package/new/naiveproxy
