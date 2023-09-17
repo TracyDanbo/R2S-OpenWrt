@@ -93,6 +93,7 @@ CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_ShadowsocksR_Libev_Server=y
 
 ### THEME ###
 CONFIG_PACKAGE_luci-theme-bootstrap=y
+CONFIG_PACKAGE_luci-theme-argon=y
 
 ### RESET ###
 CONFIG_PACKAGE_kmod-gpio-button-hotplug=y
