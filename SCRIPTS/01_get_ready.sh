@@ -48,6 +48,7 @@ clone_repo $immortalwrt_repo openwrt-21.02 immortalwrt_21 &
 clone_repo $immortalwrt_repo openwrt-23.05 immortalwrt_23 &
 clone_repo $immortalwrt_pkg_repo master immortalwrt_pkg &
 clone_repo $immortalwrt_pkg_repo openwrt-21.02 immortalwrt_pkg_21 &
+clone_repo $immortalwrt_pkg_repo openwrt-23.05 immortalwrt_pkg_23 &
 clone_repo $immortalwrt_luci_repo master immortalwrt_luci &
 clone_repo $immortalwrt_luci_repo openwrt-21.02 immortalwrt_luci_21 &
 clone_repo $immortalwrt_luci_repo openwrt-23.05 immortalwrt_luci_23 &
