@@ -6,6 +6,7 @@ cp -rf ../immortalwrt_luci_23/applications/luci-app-qbittorrent ./package/new/lu
 cp -rf ../immortalwrt_pkg_23/net/qBittorrent-Enhanced-Edition ./package/new/qBittorrent-Enhanced-Edition
 cp -rf ../immortalwrt_pkg_23/libs/libtorrent-rasterbar ./package/new/libtorrent-rasterbar
 cp -rf ../immortalwrt_pkg_23/libs/qt6base ./package/new/qt6base
+cp -rf ../immortalwrt_pkg_23/utils/qt6tools ./package/new/qt6tools
 # cp -rf ../lede_pkg/net/qBittorrent-static ./package/new/qBittorrent-static
 # cp -rf ../lede_pkg/net/qBittorrent ./package/new/qBittorrent
 # cp -rf ../lede_pkg/libs/qtbase ./package/new/qtbase
