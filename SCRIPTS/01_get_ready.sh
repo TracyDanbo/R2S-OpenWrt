@@ -39,6 +39,12 @@ zxlhhyccc_repo="https://github.com/zxlhhyccc/bf-package-master"
 linkease_repo="https://github.com/linkease/openwrt-app-actions"
 linkease_pkg_repo="https://github.com/jjm2473/packages"
 linkease_luci_repo="https://github.com/jjm2473/luci"
+sirpdboy_repo="https://github.com/sirpdboy/sirpdboy-package"
+sbwdaednext_repo="https://github.com/sbwml/luci-app-daed-next"
+lucidaednext_repo="https://github.com/QiuSimons/luci-app-daed-next"
+sbwfw876_repo="https://github.com/sbwml/openwrt_helloworld"
+sbw_pkg_repo="https://github.com/sbwml/openwrt_pkgs"
+natmap_repo="https://github.com/blueberry-pie-11/luci-app-natmap"
 
 # 开始克隆仓库，并行执行
 clone_repo $openwrt_repo $latest_release openwrt &
@@ -48,7 +54,6 @@ clone_repo $immortalwrt_repo openwrt-21.02 immortalwrt_21 &
 clone_repo $immortalwrt_repo openwrt-23.05 immortalwrt_23 &
 clone_repo $immortalwrt_pkg_repo master immortalwrt_pkg &
 clone_repo $immortalwrt_pkg_repo openwrt-21.02 immortalwrt_pkg_21 &
-clone_repo $immortalwrt_pkg_repo openwrt-23.05 immortalwrt_pkg_23 &
 clone_repo $immortalwrt_luci_repo master immortalwrt_luci &
 clone_repo $immortalwrt_luci_repo openwrt-21.02 immortalwrt_luci_21 &
 clone_repo $immortalwrt_luci_repo openwrt-23.05 immortalwrt_luci_23 &
@@ -70,11 +75,17 @@ clone_repo $dockerman_repo master dockerman &
 clone_repo $diskman_repo master diskman &
 clone_repo $docker_lib_repo master docker_lib &
 clone_repo $mosdns_repo master mosdns &
-clone_repo $ssrp_repo master ssrp &
-clone_repo $zxlhhyccc_repo main zxlhhyccc &
+clone_repo $ssrp_repo main ssrp &
+clone_repo $zxlhhyccc_repo master zxlhhyccc &
 clone_repo $linkease_repo main linkease &
 clone_repo $linkease_pkg_repo istoreos-21.02 linkease_pkg &
 clone_repo $linkease_luci_repo istoreos-21.02 linkease_luci &
+clone_repo $sirpdboy_repo main sirpdboy &
+clone_repo $sbwdaednext_repo main sbwdaednext &
+clone_repo $lucidaednext_repo rebase lucidaednext &
+clone_repo $sbwfw876_repo v5 sbwfw876 &
+clone_repo $sbw_pkg_repo main sbw_pkg &
+clone_repo $natmap_repo master natmap &
 
 # 等待所有后台任务完成
 wait
